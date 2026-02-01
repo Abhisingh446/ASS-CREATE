@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ASS CREATE | Modern Article Platform</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="ASS CREATE - Modern Article & Blog Platform">
+
+<!-- 🔥 STYLE (CSS) -->
+<style>
+:root{
+  --bg:#ffffff;
+  --text:#111;
+  --primary:#e60000;
+}
+body.dark{
+  --bg:#0f0f0f;
+  --text:#f1f1f1;
+}
+body{
+  margin:0;
+  font-family:Arial,Helvetica,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+header{
+  padding:15px;
+  background:var(--primary);
+  color:#fff;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+button{
+  padding:8px 14px;
+  border:none;
+  cursor:pointer;
+}
+.container{
+  max-width:900px;
+  margin:auto;
+  padding:15px;
+}
+.article{
+  border-bottom:1px solid #ddd;
+  padding:15px 0;
+}
+.article h2{
+  margin:0;
+}
+.hidden{display:none;}
+input,textarea{
+  width:100%;
+  padding:8px;
+  margin:5px 0;
+}
+footer{
+  text-align:center;
+  padding:20px;
+  opacity:.7;
+}
+</style>
+</head>
+
+<body>
+<header>
+  <b>ASS CREATE</b>
+  <div>
+    <button onclick="toggleTheme()">🌙</button>
+    <button onclick="show('login')">Login</button>
+    <button onclick="show('register')">Signup</button>
+    <button onclick="logout()">Logout</button>
+  </div>
+</header>
+
+<div class="container">
+
+<!-- HOME -->
+<div id="home">
+  <h1>Latest Articles</h1>
+  <div id="articles"></div>
+</div>
+
+<!-- LOGIN -->
+<div id="login" class="hidden">
+  <h2>Login</h2>
+  <input id="loginEmail" placeholder="Email">
+  <input id="loginPass" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+</div>
+
+<!-- REGISTER -->
+<div id="register" class="hidden">
+  <h2>Signup</h2>
+  <input id="regEmail" placeholder="Email">
+  <input id="regPass" type="password" placeholder="Password">
+  <button onclick="register()">Create Account</button>
+</div>
+
+<!-- ADMIN -->
+<div id="admin" class="hidden">
+  <h2>Admin Panel</h2>
+  <input id="title" placeholder="Article Title">
+  <textarea id="content" placeholder="Article Content"></textarea>
+  <button onclick="addArticle()">Publish</button>
+</div>
+
+</div>
+
+<footer>
+© 2026 ASS CREATE
+</footer>
+
+<!-- 🔥 FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy, serverTimestamp } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* 🔴 PASTE YOUR FIREBASE CONFIG HERE */
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT",
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+/* UI CONTROL */
+window.show = id =>{
+  document.querySelectorAll(".container > div").forEach(d=>d.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+};
+
+/* THEME */
+window.toggleTheme=()=>{
+  document.body.classList.toggle("dark");
+};
+
+/* AUTH */
+window.login=()=>{
+  signInWithEmailAndPassword(auth, loginEmail.value, loginPass.value);
+};
+
+window.register=()=>{
+  createUserWithEmailAndPassword(auth, regEmail.value, regPass.value);
+};
+
+window.logout=()=>signOut(auth);
+
+/* ADMIN CHECK */
+onAuthStateChanged(auth,user=>{
+  if(user && user.email==="vickramsingh73371@gmail.com"){
+    show("admin");
+  }else{
+    show("home");
+  }
+});
+
+/* ARTICLES */
+async function loadArticles(){
+  articles.innerHTML="";
+  const q=query(collection(db,"articles"),orderBy("createdAt","desc"));
+  const snap=await getDocs(q);
+  snap.forEach(doc=>{
+    const a=doc.data();
+    articles.innerHTML+=`
+      <div class="article">
+        <h2>${a.title}</h2>
+        <p>${a.content.substring(0,150)}...</p>
+      </div>`;
+  });
+}
+loadArticles();
+
+window.addArticle=async()=>{
+  await addDoc(collection(db,"articles"),{
+    title:title.value,
+    content:content.value,
+    createdAt:serverTimestamp()
+  });
+  alert("Article published");
+  loadArticles();
+};
+</script>
+
+</body>
+</html>
